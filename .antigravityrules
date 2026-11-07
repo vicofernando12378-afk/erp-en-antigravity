@@ -1,0 +1,38 @@
+# REGLAS DE AUTONOMÍA LOCAL — ANTIGRAVITY (ERP-CRM CLOUD)
+
+El usuario ha concedido explícitamente permisos autónomos permanentes para las siguientes operaciones:
+
+1. **Compilación y Validación local:**
+   - Antes de cada build de verificación, se debe ejecutar primeramente el linter mediante `npm run lint` cuando esté configurado.
+   - Se debe ejecutar el set de pruebas unitarias mediante `npm run test` (Vitest / Jest).
+   - Tras pasar las etapas de validación y pruebas, se autoriza a ejecutar el comando `npm run build` de forma autónoma para verificar la integridad del código sin necesidad de solicitar aprobación previa en el chat.
+
+2. **Control de Versiones y Git:**
+   - Se autoriza a ejecutar comandos de Git (`git status`, `git add`, `git commit`, `git push`, `gh repo create`) de forma autónoma para guardar, versionar y respaldar los cambios en GitHub bajo la cuenta del usuario (`vicofernando12378-afk`).
+
+3. **Despliegue Continuo (Google Cloud / Firebase - Modo MissyPO Free Tier):**
+   - Se autoriza a ejecutar despliegues de hosting (`firebase deploy --only hosting`) y Cloud Functions (`firebase deploy --only functions`) de forma autónoma tras validar que la compilación sea exitosa.
+   - **Políticas estrictas de Costo $0**: Proyecto `crm-erps`, región `us-central1`, `minInstances: 0`, `maxInstances: 1`, `memory: 256MiB`, timeout 30s, limpieza de Artifact Registry a 1 día.
+
+4. **Graphify — Grafo de conocimiento del proyecto:**
+   - Este proyecto mantiene un knowledge graph en `graphify-out/` con god nodes, community structure y cross-file relationships.
+   - Graphify instalado en Windows (`C:\Users\victo\AppData\Roaming\uv\tools\graphifyy\Scripts\graphify.exe`).
+   - **Reglas de uso:**
+     - Para preguntas sobre el codebase, PRIMERO ejecutar `graphify query "<pregunta>"` cuando `graphify-out/graph.json` existe.
+     - Para relaciones entre módulos: `graphify path "<A>" "<B>"`.
+     - Para explicaciones focused de un concepto: `graphify explain "<concepto>"`.
+     - Si `graphify-out/wiki/index.md` existe, usarlo para navegación general en vez de leer archivos raw.
+     - Después de modificar código o cerrar fases, ejecutar `graphify update .` para mantener el grafo actualizado (AST-only, sin costo de API).
+
+5. **Engram — Memoria persistente (OBLIGATORIO):**
+   - Engram es un sistema de memoria persistente entre sesiones. Este protocolo es **MANDATORY y ALWAYS ACTIVE**.
+   - **Guardado proactivo (NO esperar a que el usuario pida):**
+     Llamar `mem_save` INMEDIATAMENTE después de decisiones de arquitectura, bugfixes, setup de entorno o descubrimientos no obvios.
+   - **Protocolo de cierre de sesión (MANDATORY):**
+     Antes de terminar una sesión o decir "listo"/"eso es todo", llamar `mem_session_summary` con Goal, Instructions, Discoveries, Accomplished, Next Steps y Relevant Files.
+
+6. **Uso Obligatorio de Engram y Graphify para Tareas de Código:**
+   - Ante cualquier petición de código (arreglar bugs, refactorizar, añadir funcionalidades o revisar módulos), el asistente está **OBLIGADO** a:
+     1. Buscar en Engram (`mem_context`/`mem_search`) para verificar decisiones previas, configuraciones y preferencias del usuario.
+     2. Consultar Graphify (`graphify query`/`graphify path`/`graphify explain`) para mapear contexto, dependencias y nodos afectados.
+     3. Formular la respuesta incorporando este contexto local para mantener coherencia estricta con las decisiones existentes del proyecto.

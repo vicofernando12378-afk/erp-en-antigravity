@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+vendor/
+**/node_modules/
+**/vendor/
+
+# Environment and Secrets
+.env
+.env.*
+!*.env.example
+**/*.env
+**/*.env.*
+!**/*.env.example
+**/serviceAccountKey.json
+*.key
+*.pem
+
+# Build artifacts
+dist/
+**/dist/
+backend-google/lib/
+
+# Temporary / Portables / Local tools
+.tools/
+*.log
+**/*.log
+git_push.log
+.DS_Store
+Thumbs.db
+.phpunit.cache/
+test-results/
+playwright-report/
+
+# Firebase local cache
+.firebase/
+**/.firebase/
+
+# Legacy Reference & SQL Dumps (se quedan en local, NO van a GitHub)
+source-code-v1.7/
+backend/
+*.sql
+documentation/
+
+# Graphify (Mapa de Código Autogenerado)
+graphify-out/

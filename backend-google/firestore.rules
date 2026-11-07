@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (request.auth.token.role == 'admin' || request.auth.token.admin == true);
+    }
+
+    function isStaff() {
+      return isAuthenticated() && (isAdmin() || request.auth.token.role == 'staff' || request.auth.token.role == 'manager');
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ERP Core Collections
+    match /erp_items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    match /erp_locations/{locId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /erp_stock_moves/{moveId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if false; // Inmutable ledger
+    }
+
+    match /erp_stock_transfers/{transferId} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    match /erp_customers/{customerId} {
+      allow read: if isStaff() || isOwner(customerId);
+      allow write: if isStaff();
+    }
+
+    match /erp_suppliers/{supplierId} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    match /erp_purchases/{purchaseId} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    match /erp_receives/{receiveId} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    match /erp_sales_orders/{orderId} {
+      allow read: if isStaff() || (isAuthenticated() && resource.data.customer_id == request.auth.uid);
+      allow write: if isStaff();
+    }
+
+    match /erp_invoices/{invoiceId} {
+      allow read: if isStaff() || (isAuthenticated() && resource.data.customer_id == request.auth.uid);
+      allow write: if isStaff();
+    }
+
+    match /erp_shipments/{shipmentId} {
+      allow read: if isStaff() || (isAuthenticated() && resource.data.customer_id == request.auth.uid);
+      allow write: if isStaff();
+    }
+
+    match /erp_payments/{paymentId} {
+      allow read: if isStaff() || (isAuthenticated() && resource.data.customer_id == request.auth.uid);
+      allow write: if isStaff();
+    }
+
+    match /erp_users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /erp_settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

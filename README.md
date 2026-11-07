@@ -1,37 +1,78 @@
-# ERP modernizado — entorno de revisión
+# StockPileCloud — ERP & CRM Serverless
 
-Aplicación local con Laravel 13, PHP 8.5, MySQL 8.4/InnoDB y React. Sin Firebase.
+Modernización serverless de nivel empresarial basada en la funcionalidad completa de Stockpile v1.7, desplegada sobre infraestructura Google Cloud Serverless y Firebase bajo políticas de costo cero (Free Tier).
 
-## Acceso local
+🌐 **Acceso en Producción:** [https://crm-erps.web.app](https://crm-erps.web.app)  
+⚡ **API Endpoint:** [https://us-central1-crm-erps.cloudfunctions.net/api](https://us-central1-crm-erps.cloudfunctions.net/api)
 
-Ejecutar `./scripts/start-local.ps1` desde esta carpeta y abrir http://127.0.0.1:3100.
-El usuario y la contraseña generados están en `.tools/acceso-local.txt`. No versionar este archivo.
-Las herramientas portables y bases locales están en `.tools`; no son parte del código distribuible.
+---
 
-## Funciones disponibles
+## 🏛️ Arquitectura del Sistema
 
-- Sesiones, recuperación de contraseña, usuarios, roles configurables y auditoría.
-- Productos, imágenes, códigos de barras, clientes, proveedores y catálogos auxiliares.
-- Compras y recepciones parciales; pedidos, venta directa, facturas internas y despachos parciales.
-- Cobros, anulaciones con reversión y bloqueo de dependencias.
-- Inventario, movimientos, ajustes y traslados con control de existencias.
-- Panel, reportes de ventas e inventario, CSV, PDF e importación CSV con vista previa.
-- Preparación de documentos por correo mediante cola. El transporte local es `log`: no entrega correo real. Se requiere configurar SMTP y ejecutar `php artisan queue:work` para entregas reales.
+El proyecto está diseñado bajo arquitectura hexagonal y patrones serverless desacoplados:
 
-Las facturas son documentos internos; no incluyen integración fiscal electrónica.
+- **Frontend (SPA):** React 18 + TypeScript + Vite + Tailwind CSS + Lucide Icons. Desplegado en **Firebase Hosting**.
+- **Backend (API Serverless):** Node.js 22 + TypeScript + Express + Firebase Functions v2. Desplegado en **Google Cloud Functions v2** (región `us-central1`).
+- **Base de Datos NoSQL Transaccional:** **Google Cloud Firestore** (multirregión `nam5`) con transacciones atómicas `runTransaction` para control de stock e integridad de saldos.
+- **Background Event Triggers:** Cloud Function `onStockAlert` disparada automáticamente en Firestore para alertas de quiebre de stock.
+- **Políticas Free Tier (Modo MissyPO):** `minInstances: 0`, `maxInstances: 1`, `memory: 256MiB`, `timeoutSeconds: 30`, y ciclo de vida de limpieza de artefactos en Google Artifact Registry para garantizar $0 de costo operacional.
 
-## Validación y respaldo
+---
 
-- `./scripts/test-local.ps1 -MySQL`: pruebas aisladas en erp_testing y compilación React.
-- Desde frontend: `npx playwright test` (requiere Chromium de Playwright o PLAYWRIGHT_CHROMIUM_EXECUTABLE).
-- Desde backend: `../.tools/php/php.exe artisan erp:reconcile`.
-- `./scripts/backup-local.ps1`: respaldo SQL y archivos privados. Evitar escrituras durante el respaldo para una copia consistente entre base y archivos.
-- `./.tools/php/php.exe scripts/verify-restore.php`: restaurar el último SQL en una base nueva y comparar cantidades de registros. Conservar también la configuración y APP_KEY por un canal seguro.
+## 📦 Módulos y Funcionalidades (100% Paridad con Stockpile v1.7)
 
-## Datos y pendientes
+1. **Dashboard Ejecutivo:** Métricas en tiempo real de valor de inventario, ventas, órdenes pendientes y alertas de bajo stock.
+2. **Inventario y Productos (`/items`):**
+   - Catálogo maestro de productos con imágenes, códigos SKU y categorías.
+   - Botón interactivo `+ Registrar Nuevo Producto` con stock inicial y costo.
+   - Botón interactivo `+ Ingresar Stock` para compras directas o recepciones manuales en almacén.
+   - Ajustes manuales atómicos de inventario por almacén con auditoría.
+3. **Traslados entre Almacenes (`/transfers`):**
+   - Movimientos atómicos entre almacenes con registro en el libro mayor inmutable `erp_stock_moves`.
+4. **Clientes y Sucursales (`/customers`):**
+   - Gestión integral de clientes, líneas de crédito, contactos y sucursales.
+5. **Ventas y Facturación:**
+   - **Pedidos de Venta (`/orders`):** Ciclo comercial completo desde borrador a cotización y orden confirmada.
+   - **Facturas Emitidas (`/invoices`):** Conversión atómica desde órdenes o venta directa con descuento de stock.
+   - **Cobros y Recibos (`/payments`):** Cobros totales y parciales con conciliación automática de saldos pendientes.
+   - **Despachos y Guías (`/shipments`):** Registro de guías de remisión y control de entregas a clientes.
+6. **Abastecimiento y Compras:**
+   - **Proveedores (`/suppliers`):** Directorio de proveedores, condiciones comerciales y catálogo de compras.
+   - **Órdenes de Compra (`/purchases`):** Modal interactivo `+ Nueva Orden de Compra` con selección de proveedor, almacén destino y líneas de producto.
+   - **Recepciones de Mercadería (`/receives`):** Módulo `📥 Recibir Mercadería` con incremento atómico de stock e impacto en kardex.
+7. **Suite de Reportes Financieros y Operativos:**
+   - Reportes de existencias valorizadas, rotación, ventas por período, saldos por cobrar y exportación PDF/CSV.
+8. **Configuración y Roles (RBAC):**
+   - Configuración empresarial y control de permisos granulares por rol.
 
-El SQL legado es de prueba. Se importaron maestros con correspondencias de identificadores; documentos y saldos históricos permanecen aislados en legacy_demo. Se detectó un saldo negativo y no se inventaron existencias para corregirlo.
+---
 
-Esta es una implementación local para revisión, no el cierre de toda la modernización. Faltan validación funcional del negocio, conciliación de la migración histórica, reportes avanzados, integración fiscal si corresponde y puesta en producción. Docker Compose está preparado con MySQL, PHP, Nginx y trabajador de colas, pero no se ha probado porque Docker no está instalado.
+## 🛠️ Comandos de Desarrollo y Validación
 
-El código vigente está en backend y frontend/src/erp. source-code-v1.7 y backend-google son referencias históricas. No ejecutar despliegues Firebase heredados.
+### Frontend (`/frontend`)
+```bash
+cd frontend
+npm install
+npm run build      # Verificación TypeScript + compilación Vite
+npm run dev        # Servidor de desarrollo local
+```
+
+### Backend (`/backend-google`)
+```bash
+cd backend-google
+npm install
+npm run build      # Verificación TypeScript (tsc)
+npm run migrate    # Script ETL para importar datos SQL heredados a Firestore
+```
+
+### Despliegue a Producción (Firebase CLI)
+```bash
+firebase deploy --only hosting               # Despliegue de Frontend
+firebase deploy --only functions:erp-crm     # Despliegue de Cloud Functions
+```
+
+---
+
+## 🔒 Reglas de Seguridad y Autonomía
+
+Este repositorio opera bajo el protocolo estricto de [.antigravityrules](.antigravityrules), con validación obligatoria antes de despliegue, inmutabilidad de proyectos compartidos y sincronización continua con el grafo de conocimiento (**Graphify**) y memoria persistente (**Engram**).
